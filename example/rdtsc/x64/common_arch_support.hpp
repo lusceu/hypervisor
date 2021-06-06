@@ -111,6 +111,12 @@ namespace example
                              << bsl::grn << " now "                      // --
                              << bsl::rst << "in a vm (rdtsc example)\n"; // --
 
+                // Test, if Xue flag works
+                if constexpr (HYPERVISOR_SERIAL_USB3_XUE) {
+                    bsl::debug() << bsl::rst << "Xue Flag working\n"; // --
+                }
+
+
                 if (vpsid + bsl::ONE_U16 == syscall::bf_tls_online_pps())
                 {
                     bsl::print() << bsl::endl;

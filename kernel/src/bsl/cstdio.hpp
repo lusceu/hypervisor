@@ -34,8 +34,19 @@
 #include <bsl/cstr_type.hpp>
 #include <bsl/is_constant_evaluated.hpp>
 
+#define VMM 
+#ifdef HYPERVISOR_SERIAL_USB3_XUE
+#include <xue.h>
+#endif
+
 namespace bsl
 {
+
+    if constexpr (HYPERVISOR_SERIAL_USB3_XUE){
+        extern struct xue g_xue;
+        extern struct xue_ops g_xue_ops;
+    }
+
     /// <!-- description -->
     ///   @brief Outputs a character.
     ///
@@ -51,6 +62,10 @@ namespace bsl
 
         mk::debug_ring_write(c);
         mk::serial_write_c(c);
+
+        if constexpr (HYPERVISOR_SERIAL_USB3_XUE){
+            xue_write(&g_xue, c, sizeof(char_type));
+        }
     }
 
     /// <!-- description -->
@@ -68,6 +83,10 @@ namespace bsl
 
         mk::debug_ring_write(str);
         mk::serial_write(str);
+
+        if constexpr (HYPERVISOR_SERIAL_USB3_XUE){
+            xue_write(&g_xue, (const char *)str.data(), str.size());
+        }
     }
 }
 

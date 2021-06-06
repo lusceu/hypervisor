@@ -21,6 +21,12 @@
 
 add_executable(example_rdtsc)
 
+# Test Cmake defines
+
+target_compile_definitions(example_rdtsc PUBLIC
+    HYPERVISOR_SERIAL_USB3_XUE=${HYPERVISOR_SERIAL_USB3_XUE}
+)
+
 # ------------------------------------------------------------------------------
 # Includes
 # ------------------------------------------------------------------------------

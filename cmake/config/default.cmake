@@ -455,3 +455,11 @@ bf_add_config(
     DESCRIPTION "Defines an extension's default heap pool max size"
     OPTIONS HYPERVISOR_MK_PAGE_POOL_SIZE
 )
+
+bf_add_config(
+    CONFIG_NAME HYPERVISOR_SERIAL_USB3_XUE
+    CONFIG_TYPE STRING
+    DEFAULT_VAL "0x01"
+    DESCRIPTION "Defines the usage of serial output via USB3/Xue."
+    SKIP_VALIDATION
+)

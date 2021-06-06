@@ -23,6 +23,7 @@ include(FetchContent)
 set(FETCHCONTENT_BASE_DIR ${CMAKE_BINARY_DIR}/depend)
 
 include(${CMAKE_CURRENT_LIST_DIR}/depend/bsl.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/depend/xue.cmake)
 
 include(${bsl_SOURCE_DIR}/cmake/config/all_projects.cmake)
 include(${bsl_SOURCE_DIR}/cmake/config/cmake.cmake)
