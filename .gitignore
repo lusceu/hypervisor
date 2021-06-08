@@ -73,3 +73,8 @@ loader/**/*.cmd
 
 # Windows Loader
 loader/windows/x64/
+
+# Ddimon extension
+example/ddimon/driver/windows/hook_identifier/.vs/
+example/ddimon/driver/.vs/
+example/ddimon/driver/windows/hook_identifier/x64/debug
