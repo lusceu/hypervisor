@@ -131,7 +131,7 @@ Return Value:
     ntStatus = IoCreateSymbolicLink(&ntWin32NameString, &ntUnicodeString);
 
     // Use a Vmcall
-    AsmVmcall((void *) 1);
+    //AsmVmcall((void *) 1);
 
     if (!NT_SUCCESS(ntStatus)) {
         //
