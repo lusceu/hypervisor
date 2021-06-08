@@ -78,3 +78,4 @@ loader/windows/x64/
 example/ddimon/driver/windows/hook_identifier/.vs/
 example/ddimon/driver/.vs/
 example/ddimon/driver/windows/hook_identifier/x64/debug
+example/ddimon/driver/windows/hook_identifier/hook_identifier/x64/debug
