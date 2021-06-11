@@ -138,12 +138,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="asm.h" />
+    <ClInclude Include="helper.h" />
     <ClInclude Include="hook_identifier.h" />
   </ItemGroup>
   <ItemGroup>
     <MASM Include="x64.asm" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="helper.c" />
     <ClCompile Include="hook_identifier.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

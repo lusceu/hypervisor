@@ -22,9 +22,14 @@ Environment:
 
 #include "asm.h"
 #include "hook_identifier.h"
+#include "helper.h"
 
 #include <ntddk.h>    // various NT definitions
 #include <string.h>
+#include <ntimage.h>
+#include <ntstrsafe.h>
+#include <wdm.h>
+
 
 #define NT_DEVICE_NAME L"\\Device\\HOOKIDNT"
 #define DOS_DEVICE_NAME L"\\DosDevices\\HookIdentifier"
@@ -130,9 +135,29 @@ Return Value:
 
     ntStatus = IoCreateSymbolicLink(&ntWin32NameString, &ntUnicodeString);
 
-    // Use a Vmcall
-    //AsmVmcall((void *) 1);
 
+    // ### Begin of the hook_identifier "business logic"
+
+    // PCWSTR target_function_names[] = {
+    //     L"EXQUEUEWORKITEM",
+    //     L"EXFREEPOOL",
+    //     L"EXFREEPOOL",
+    //     L"EXFREEPOOLWITHTAG",
+    //     L"NTQUERYSYSTEMINFORMATION",
+    // };
+
+    void* ntbase = get_ntoskrnl_base();
+    DbgPrint("ntoskrnl address: 0x%x", ntbase);
+
+    PIMAGE_DOS_HEADER dos_header = (PIMAGE_DOS_HEADER)(ntbase);
+    DbgPrint("DOS-Header magic value: %x", dos_header->e_magic);
+
+    // Use a Vmcall
+    // AsmVmcall((void *) &ntStatus);
+
+    // ### End of the hook_identifier "business logic"
+
+    
     if (!NT_SUCCESS(ntStatus)) {
         //
         // Delete everything that this routine has allocated.

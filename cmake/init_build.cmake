@@ -42,6 +42,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/target/loader_unload.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/target/loader_clean.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/target/loader_quick.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/target/copy_to_efi_partition.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/target/ddimon.cmake)
 
 include(${CMAKE_CURRENT_LIST_DIR}/write_constants.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/write_toolchain_x64_ext_ld.cmake)
