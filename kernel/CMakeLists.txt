@@ -67,6 +67,12 @@ if(HYPERVISOR_TARGET_ARCH STREQUAL "aarch64")
     endif()
 endif()
 
+if(HYPERVISOR_SERIAL_USB3_XUE STREQUAL "true")
+target_include_directories(kernel PRIVATE
+    ${xue_SOURCE_DIR}/include
+)
+endif()
+
 # ------------------------------------------------------------------------------
 # Headers
 # ------------------------------------------------------------------------------
@@ -183,6 +189,12 @@ if(HYPERVISOR_TARGET_ARCH STREQUAL "aarch64")
         ${CMAKE_CURRENT_LIST_DIR}/src/arm/aarch64/root_page_table_t.hpp
         ${CMAKE_CURRENT_LIST_DIR}/src/arm/aarch64/vmexit_log_t.hpp
         ${CMAKE_CURRENT_LIST_DIR}/src/arm/aarch64/vps_t.hpp
+    )
+endif()
+
+if(HYPERVISOR_SERIAL_USB3_XUE STREQUAL "true")
+    list(APPEND HEADERS
+        ${xue_SOURCE_DIR}/include/xue.h
     )
 endif()
 
