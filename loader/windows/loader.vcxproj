@@ -95,6 +95,7 @@
     <ClInclude Include="..\include\map_mk_stack.h" />
     <ClInclude Include="..\include\map_mk_state.h" />
     <ClInclude Include="..\include\map_root_vp_state.h" />
+    <ClInclude Include="..\include\mk_xue.h" />
     <ClInclude Include="..\include\platform.h" />
     <ClInclude Include="..\include\promote.h" />
     <ClInclude Include="..\include\send_command_report_off.h" />
@@ -239,6 +240,7 @@
     <ClCompile Include="..\src\map_mk_huge_pool.c" />
     <ClCompile Include="..\src\map_mk_page_pool.c" />
     <ClCompile Include="..\src\map_mk_stack.c" />
+    <ClCompile Include="..\src\mk_xue.c" />
     <ClCompile Include="..\src\start_vmm.c" />
     <ClCompile Include="..\src\start_vmm_per_cpu.c" />
     <ClCompile Include="..\src\stop_and_free_the_vmm.c" />

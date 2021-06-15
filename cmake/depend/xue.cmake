@@ -21,7 +21,7 @@
 
 FetchContent_Declare(
     xue
-    GIT_REPOSITORY  https://github.com/connojd/xue
+    GIT_REPOSITORY  https://github.com/lusceu/xue
 )
 
 FetchContent_GetProperties(bsl)

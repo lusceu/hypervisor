@@ -19,6 +19,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+if(HYPERVISOR_SERIAL_USB3_XUE STREQUAL "true")
+    file(COPY ${xue_SOURCE_DIR}/include/xue.h DESTINATION ${CMAKE_CURRENT_LIST_DIR}/../../loader/include/)
+    
+    add_custom_target(driver_build_xue
+    COMMAND ${CMAKE_COMMAND} -E chdir ${CMAKE_CURRENT_LIST_DIR}/../../loader/windows MSBuild.exe /p:Configuration=Debug /p:Platform=x64 /p:Arch=${HYPERVISOR_TARGET_ARCH} /p:CMAKE_BINARY_DIR=${CMAKE_BINARY_DIR}
+    VERBATIM
+)
+
+endif()
+
 if(HYPERVISOR_BUILD_LOADER AND NOT HYPERVISOR_TARGET_ARCH STREQUAL "aarch64")
     if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         add_custom_target(loader_build

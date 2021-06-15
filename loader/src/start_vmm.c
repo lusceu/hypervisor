@@ -60,12 +60,21 @@
 #include <map_mk_elf_segments.h>
 #include <map_mk_huge_pool.h>
 #include <map_mk_page_pool.h>
+#include <mk_xue.h>
 #include <platform.h>
 #include <start_vmm_args_t.h>
 #include <start_vmm_per_cpu.h>
 #include <stop_and_free_the_vmm.h>
 #include <stop_vmm_per_cpu.h>
 #include <types.h>
+
+#define HYPERVISOR_SERIAL_USB3_XUE
+#ifdef HYPERVISOR_SERIAL_USB3_XUE
+#include <xue.h>
+#endif
+
+struct xue g_xue;
+struct xue_ops g_xue_ops;
 
 static int64_t
 alloc_and_start_the_vmm(struct start_vmm_args_t const *const args)
@@ -146,6 +155,34 @@ alloc_and_start_the_vmm(struct start_vmm_args_t const *const args)
         bferror("map_mk_huge_pool failed");
         goto map_mk_huge_pool_failed;
     }
+
+    #ifdef HYPERVISOR_SERIAL_USB3_XUE
+    if (alloc_mk_xue_dma(128, &g_mk_xue_dma)) {
+        bferror("alloc_mk_xue_dma failed");
+        goto alloc_mk_huge_pool_failed;
+    }
+
+    xue_open(&g_xue, &g_xue_ops, NULL);
+
+
+    //xue_init_ops(&g_xue, &g_xue_ops);
+    //g_xue.sys = NULL;
+
+    // WRITE_PORT_ULONG((PULONG)0XCF8, (ULONG)1); - works
+    // xhc_mmio_phys(&g_xue); - works
+
+    
+
+    bfdebug("xue mmio:");
+    bfdebug_ptr(" - addr", (void*)g_xue.xhc_mmio);
+    bfdebug_x64(" - size", g_xue.xhc_mmio_size);
+    xue_write(&g_xue, "Erfolg", 10);
+
+    //dump_mk_xue_dma(&g_mk_xue_dma);
+     // map_mk_xue -> map mmio and dma page pool to the microkernel
+
+    #endif
+   
 
 #ifdef DEBUG_LOADER
     dump_mk_root_page_table(g_mk_root_page_table);
@@ -251,6 +288,8 @@ verify_start_vmm_args(struct start_vmm_args_t const *const args)
             return LOADER_FAILURE;
         }
     }
+
+    //xue_write(&g_xue, "Loader erfolgreich", 20);
 
     return LOADER_SUCCESS;
 }

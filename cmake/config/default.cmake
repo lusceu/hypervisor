@@ -455,3 +455,28 @@ bf_add_config(
     DESCRIPTION "Defines an extension's default heap pool max size"
     OPTIONS HYPERVISOR_MK_PAGE_POOL_SIZE
 )
+
+bf_add_config(
+    CONFIG_NAME HYPERVISOR_SERIAL_USB3_XUE
+    CONFIG_TYPE STRING
+    DEFAULT_VAL "false"
+    DESCRIPTION "Defines the microkernel's use of Xue"
+    SKIP_VALIDATION
+)
+
+bf_add_config(
+    CONFIG_NAME HYPERVISOR_MK_XUE_MMIO_ADDR
+    CONFIG_TYPE STRING
+    DEFAULT_VAL "0x0000009000000000"
+    DESCRIPTION "Defines the microkernel's XHCI MMIO address"
+    OPTIONS 0x0000009000000000
+)
+
+bf_add_config(
+    CONFIG_NAME HYPERVISOR_MK_XUE_DMA_ADDR
+    CONFIG_TYPE STRING
+    DEFAULT_VAL "0x000000A000000000"
+    DESCRIPTION "Defines the microkernel's XHCI DMA address"
+    OPTIONS 0x000000A000000000
+)
+
