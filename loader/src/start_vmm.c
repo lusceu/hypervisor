@@ -171,13 +171,14 @@ alloc_and_start_the_vmm(struct start_vmm_args_t const *const args)
     // WRITE_PORT_ULONG((PULONG)0XCF8, (ULONG)1); - works
     // xhc_mmio_phys(&g_xue); - works
 
-    
-
     bfdebug("xue mmio:");
     bfdebug_ptr(" - addr", (void*)g_xue.xhc_mmio);
     bfdebug_x64(" - size", g_xue.xhc_mmio_size);
-    xue_write(&g_xue, "Erfolg", 10);
 
+    const char success[] = "Erfolg";
+    xue_write(&g_xue, success, sizeof(success));
+
+    
     //dump_mk_xue_dma(&g_mk_xue_dma);
      // map_mk_xue -> map mmio and dma page pool to the microkernel
 
@@ -289,8 +290,6 @@ verify_start_vmm_args(struct start_vmm_args_t const *const args)
         }
     }
 
-    //xue_write(&g_xue, "Loader erfolgreich", 20);
-
     return LOADER_SUCCESS;
 }
 
@@ -308,6 +307,7 @@ int64_t
 start_vmm(struct start_vmm_args_t const *const args)
 {
     if (((void *)0) == args) {
+
         bferror("args was NULL");
         return LOADER_FAILURE;
     }
@@ -322,5 +322,6 @@ start_vmm(struct start_vmm_args_t const *const args)
         return LOADER_FAILURE;
     }
 
+    //xue_close(&g_xue);
     return LOADER_SUCCESS;
 }
