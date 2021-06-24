@@ -38,8 +38,8 @@
 
 /* DbC idVendor and idProduct */
 #define XUE_DBC_VENDOR 0x1D6B
-#define XUE_DBC_PRODUCT 0x0010
-#define XUE_DBC_PROTOCOL 0x0000
+#define XUE_DBC_PRODUCT 0x0011
+#define XUE_DBC_PROTOCOL 0x0001cd
 
 /* DCCTRL fields */
 #define XUE_CTRL_DCR 0
@@ -298,6 +298,16 @@ void MmFreeNonCachedMemory(
   SIZE_T NumberOfBytes
 );
 
+// PVOID MmAllocateContiguousMemory(
+//   SIZE_T           NumberOfBytes,
+//   PHYSICAL_ADDRESS HighestAcceptableAddress
+// );
+
+// void MmFreeContiguousMemory(
+//   PVOID BaseAddress
+// );
+
+
 #define XUE_SYSID xue_sysid_windows
 
 #define xue_debug(...)                                                         \
@@ -337,18 +347,50 @@ static inline void xue_sys_pause(void *sys)
     _mm_pause();
 }
 
+// PVOID MmAllocateContiguousMemorySpecifyCache(
+//   SIZE_T              NumberOfBytes,
+//   PHYSICAL_ADDRESS    LowestAcceptableAddress,
+//   PHYSICAL_ADDRESS    HighestAcceptableAddress,
+//   PHYSICAL_ADDRESS    BoundaryAddressMultiple,
+//   MEMORY_CACHING_TYPE CacheType
+// );
+
 static inline void *xue_sys_alloc_dma(void *sys, uint64_t order)
 {
     (void)sys;
 
-    return (void *)MmAllocateNonCachedMemory(XUE_PAGE_SIZE << order);
+    // PHYSICAL_ADDRESS phys_addr_low;
+    // phys_addr_low.QuadPart = 0x0;
+
+    // PHYSICAL_ADDRESS phys_addr_high;
+    // phys_addr_high.QuadPart = 0x00000000FFFFFFFF;
+    //phys_addr_high.QuadPart = 0xFFFFFFFFFFFFFFFF;
+
+    //void* dma_memory = (void *)MmAllocateContiguousMemorySpecifyCache(XUE_PAGE_SIZE << order, phys_addr_low, phys_addr_high, phys_addr_low, MmNonCached);
+
+    void* dma_memory = (void *)ExAllocatePool2(POOL_FLAG_NON_PAGED_EXECUTE, XUE_PAGE_SIZE << order, '1tst');
+
+//     PMDL IoAllocateMdl(
+//   __drv_aliasesMem PVOID VirtualAddress,
+//   ULONG                  Length,
+//   BOOLEAN                SecondaryBuffer,
+//   BOOLEAN                ChargeQuota,
+//   PIRP                   Irp
+// );
+
+
+    // PMDL mdl = IoAllocateMdl(dma_memory, XUE_PAGE_SIZE << order, FALSE, FALSE, NULL);
+    // MmProbeAndLockPages(mdl, KernelMode, IoWriteAccess);
+
+    return dma_memory;
 }
 
 static inline void xue_sys_free_dma(void *sys, void *addr, uint64_t order)
 {
     (void)sys;
+    (void)order;
 
-    MmFreeNonCachedMemory((PVOID)addr, XUE_PAGE_SIZE << order);
+    MmFreeContiguousMemory((PVOID)addr);
 }
 
 static inline void *xue_sys_map_xhc(void *sys, uint64_t phys, uint64_t count)
@@ -357,14 +399,44 @@ static inline void *xue_sys_map_xhc(void *sys, uint64_t phys, uint64_t count)
     PHYSICAL_ADDRESS phys_addr;
     phys_addr.QuadPart = phys;
 
-    return MmMapIoSpace(phys_addr, (SIZE_T)count, MmNonCached);
+// // //     typedef struct _MM_PHYSICAL_ADDRESS_LIST
+// // //     {
+// // //         PHYSICAL_ADDRESS PhysicalAddress;
+// // //         SIZE_T NumberOfBytes;
+// // // } MM_PHYSICAL_ADDRESS_LIST, *PMM_PHYSICAL_ADDRESS_LIST;
+
+//     MM_PHYSICAL_ADDRESS_LIST phys_addr_list;
+//     phys_addr_list.PhysicalAddress = phys_addr;
+//     phys_addr_list.NumberOfBytes = (SIZE_T)count;
+
+// // // NTSTATUS MmAllocateMdlForIoSpace(
+// // //   PMM_PHYSICAL_ADDRESS_LIST PhysicalAddressList,
+// // //   SIZE_T                    NumberOfEntries,
+// // //   PMDL                      *NewMdl
+// // // );
+
+//     PMDL phys_mdl;
+
+//     MmAllocateMdlForIoSpace(&phys_addr_list, 1, &phys_mdl);
+
+//     //MmProbeAndLockPages(phys_mdl, KernelMode, IoWriteAccess);
+
+// //     // PVOID MmMapLockedPagesSpecifyCache(
+// //     //     PMDL MemoryDescriptorList,
+// //     //     __drv_strictType(KPROCESSOR_MODE / enum _MODE, __drv_typeConst) KPROCESSOR_MODE AccessMode,
+// //     //     __drv_strictTypeMatch(__drv_typeCond) MEMORY_CACHING_TYPE CacheType,
+// //     //     PVOID RequestedAddress,
+// //     //     ULONG BugCheckOnFailure,
+// //     //     ULONG Priority);
+
+//     return MmMapLockedPagesSpecifyCache(phys_mdl, KernelMode, MmNonCached, NULL, FALSE, NormalPagePriority);
+
+    return MmMapIoSpace(phys_addr, (SIZE_T)(count), MmNonCached);
 }
 
 static inline void xue_sys_unmap_xhc(void *sys, void *virt, uint64_t count)
 {
     (void)sys;
-    (void)virt;
-    (void)count;
 
     MmUnmapIoSpace((PVOID)virt, (SIZE_T)count);
 }
@@ -372,8 +444,6 @@ static inline void xue_sys_unmap_xhc(void *sys, void *virt, uint64_t count)
 static inline void xue_sys_outd(void *sys, uint32_t port, uint32_t data)
 {
     (void)sys;
-    (void)port;
-    (void)data;
 
     WRITE_PORT_ULONG((PULONG)port, (ULONG)data);
 }
@@ -381,7 +451,6 @@ static inline void xue_sys_outd(void *sys, uint32_t port, uint32_t data)
 static inline uint32_t xue_sys_ind(void *sys, uint32_t port)
 {
     (void)sys;
-    (void)port;
 
     return (uint32_t)READ_PORT_ULONG((PULONG)port);
 }
@@ -821,7 +890,7 @@ struct xue_dbc_reg {
 
 /* Defines the size in bytes of TRB rings as 2^XUE_TRB_RING_ORDER * 4096 */
 #ifndef XUE_TRB_RING_ORDER
-#define XUE_TRB_RING_ORDER 4
+#define XUE_TRB_RING_ORDER 3
 #endif
 #define XUE_TRB_RING_CAP (XUE_TRB_PER_PAGE * (1ULL << XUE_TRB_RING_ORDER))
 #define XUE_TRB_RING_BYTES (XUE_TRB_RING_CAP * sizeof(struct xue_trb))
@@ -1179,6 +1248,8 @@ static inline struct xue_dbc_reg *xue_find_dbc(struct xue *xue)
         return NULL;
     }
 
+    bfdebug_x32("64bit Capability:", (*hccp1 & 1));
+
     xcap = (uint32_t *)(mmio + (((*hccp1 & 0xFFFF0000) >> 16) << 2));
     next = (*xcap & 0xFF00) >> 8;
     id = *xcap & 0xFF;
@@ -1411,11 +1482,19 @@ static inline void xue_pop_events(struct xue *xue)
     struct xue_trb *event = &er->trb[er->deq];
     uint64_t erdp = reg->erdp;
 
+    bfdebug_ptr("Event Ring at address:-", (void *)&xue->dbc_ering);
+    bfdebug_ptr("DbC registers address:", (void *)&xue->dbc_reg);
+    bfdebug_ptr("DbC registers control address:", (void *)&xue->dbc_reg->ctrl);
+    bfdebug_x32("COntrol REgister DbC value:", xue->dbc_reg->ctrl);
+
     ops->lfence(sys);
 
     while (xue_trb_cyc(event) == er->cyc) {
+        bfdebug("Event on Event ring");
+        bfdebug_x32("Event type: ", xue_trb_type(event));
         switch (xue_trb_type(event)) {
         case xue_trb_tfre:
+            bfdebug_x32("transfer trb event - completion code:", xue_trb_tfre_cc(event));
             if (xue_trb_tfre_cc(event) != xue_trb_cc_success) {
                 xue_alert("tfre error cc: %u\n", xue_trb_tfre_cc(event));
                 break;
@@ -1424,6 +1503,7 @@ static inline void xue_pop_events(struct xue *xue)
                 (xue_trb_tfre_ptr(event) & XUE_TRB_RING_MASK) >> trb_shift;
             break;
         case xue_trb_psce:
+            bfdebug_x32("port trb event - completion code:", xue_trb_tfre_cc(event));
             reg->portsc |= (XUE_PSC_ACK_MASK & reg->portsc);
             break;
         default:
@@ -1497,7 +1577,7 @@ static inline void xue_dump(struct xue *xue)
     struct xue_dbc_reg *r = xue->dbc_reg;
 
     xue_debug("XUE DUMP:\n");
-    xue_debug("    ctrl: 0x%x stat: 0x%x psc: 0x%x\n", r->ctrl, r->st,
+    xue_debug("    ctrl: 0x%x stat: 0x%x portsc: 0x%x\n", r->ctrl, r->st,
               r->portsc);
     xue_debug("    id: 0x%x, db: 0x%x\n", r->id, r->db);
 #if defined(__XEN__) || defined(VMM)
@@ -1514,6 +1594,8 @@ static inline void xue_dump(struct xue *xue)
               r->erdp == xue->dbc_erst[0].base);
     xue_debug("    cp == virt_to_dma(ctx): %d\n",
               r->cp == op->virt_to_dma(xue->sys, xue->dbc_ctx));
+    xue_debug("    xhc_mmio_phys: 0x%x, xhc_mmio_virt_phys: 0x%x\n", xue->xhc_mmio_phys, op->virt_to_dma(xue->sys, xue->xhc_mmio));
+    xue_debug("    xhc_mmio_virt: 0x%x\n", xue->xhc_mmio);
 }
 
 static inline void xue_enable_dbc(struct xue *xue)
@@ -1523,6 +1605,7 @@ static inline void xue_enable_dbc(struct xue *xue)
     struct xue_dbc_reg *reg = xue->dbc_reg;
 
     ops->sfence(sys);
+    reg->ctrl |= (1UL << 1);
     reg->ctrl |= (1UL << XUE_CTRL_DCE);
     ops->sfence(sys);
 
@@ -1533,27 +1616,41 @@ static inline void xue_enable_dbc(struct xue *xue)
     ops->sfence(sys);
     reg->portsc |= (1UL << XUE_PSC_PED);
     ops->sfence(sys);
-
-    /*
-     * TODO:
-     *
-     * There is a slight difference in behavior between enabling the DbC from
-     * pre and post-EFI. From post-EFI, if the cable is connected when the DbC
-     * is enabled, the host automatically enumerates the DbC. Pre-EFI, you
-     * have to plug the cable in after the DCE bit is set on some systems
-     * for it to enumerate.
-     *
-     * I suspect the difference is due to the state of the port prior to
-     * initializing the DbC. Section 4.19.1.2.4.2 seems like a good place to
-     * start a deeper investigation into this.
-     */
-    if (xue->sysid == xue_sysid_efi) {
-        xue_debug("Please insert the debug cable to continue...\n");
-    }
-
-    while ((reg->ctrl & (1UL << XUE_CTRL_DCR)) == 0) {
+    
+    while ((reg->portsc & (1UL << XUE_PSC_PED)) == 0) {
         ops->pause(sys);
     }
+
+    // /*
+    //  * TODO:
+    //  *
+    //  * There is a slight difference in behavior between enabling the DbC from
+    //  * pre and post-EFI. From post-EFI, if the cable is connected when the DbC
+    //  * is enabled, the host automatically enumerates the DbC. Pre-EFI, you
+    //  * have to plug the cable in after the DCE bit is set on some systems
+    //  * for it to enumerate.
+    //  *
+    //  * I suspect the difference is due to the state of the port prior to
+    //  * initializing the DbC. Section 4.19.1.2.4.2 seems like a good place to
+    //  * start a deeper investigation into this.
+    //  */
+    // if (xue->sysid == xue_sysid_efi) {
+    //     xue_debug("Please insert the debug cable to continue...\n");
+    // }
+
+    bfdebug("Waiting for DbC Ctrl DCR bit.");
+    xue_dump(xue);
+    xue_pop_events(xue);
+
+    while ((reg->ctrl & (1UL << XUE_CTRL_DCR)) == 0) {
+        xue_dump(xue);
+        xue_pop_events(xue);
+        ops->pause(sys);
+    }
+
+    xue_pop_events(xue);
+    bfdebug("DbC Ctrl DCR bit should be set.");
+    xue_dump(xue);
 }
 
 static inline void xue_disable_dbc(struct xue *xue)
@@ -1562,6 +1659,9 @@ static inline void xue_disable_dbc(struct xue *xue)
     struct xue_ops *ops = xue->ops;
     struct xue_dbc_reg *reg = xue->dbc_reg;
 
+    bfdebug("non disabled dbc");
+    xue_dump(xue);
+
     reg->portsc &= ~(1UL << XUE_PSC_PED);
     ops->sfence(sys);
     reg->ctrl &= ~(1UL << XUE_CTRL_DCE);
@@ -1569,6 +1669,10 @@ static inline void xue_disable_dbc(struct xue *xue)
     while (reg->ctrl & (1UL << XUE_CTRL_DCE)) {
         ops->pause(sys);
     }
+
+    xue_dump(xue);
+    bfdebug("initially disabling DbC");
+    xue_dump(xue);
 }
 
 static inline int xue_init_dbc(struct xue *xue)
@@ -1590,10 +1694,10 @@ static inline int xue_init_dbc(struct xue *xue)
     bfdebug("xue trb_ring:");
     bfdebug_ptr(" - addr", &xue->dbc_ering);
 
-
     xue_trb_ring_init(xue, &xue->dbc_ering, 0, XUE_DB_INVAL);
     xue_trb_ring_init(xue, &xue->dbc_oring, 1, XUE_DB_OUT);
     xue_trb_ring_init(xue, &xue->dbc_iring, 1, XUE_DB_IN);
+
 
     erdp = op->virt_to_dma(xue->sys, xue->dbc_ering.trb);
     if (!erdp) {
@@ -1608,6 +1712,13 @@ static inline int xue_init_dbc(struct xue *xue)
     out = op->virt_to_dma(xue->sys, xue->dbc_oring.trb);
     in = op->virt_to_dma(xue->sys, xue->dbc_iring.trb);
 
+    bfdebug("xue o_trb_ring:");
+    bfdebug_ptr("virt - addr", xue->dbc_oring.trb);
+    bfdebug_ptr("phys - addr", (void *)out);
+    bfdebug("xue i_trb_ring:");
+    bfdebug_ptr("virt - addr", xue->dbc_iring.trb);
+    bfdebug_ptr("phys - addr", (void *)in);
+
     xue_mset(xue->dbc_ctx, 0, sizeof(*xue->dbc_ctx));
     xue_init_strings(xue, xue->dbc_ctx->info);
     xue_init_ep(xue->dbc_ctx->ep_out, mbs, xue_ep_bulk_out, out);
@@ -1620,12 +1731,16 @@ static inline int xue_init_dbc(struct xue *xue)
     reg->ddi1 = (XUE_DBC_VENDOR << 16) | XUE_DBC_PROTOCOL;
     reg->ddi2 = XUE_DBC_PRODUCT;
 
+    xue_dump(xue);
+
     xue_flush_range(xue, xue->dbc_ctx, sizeof(*xue->dbc_ctx));
     xue_flush_range(xue, xue->dbc_erst, sizeof(*xue->dbc_erst));
     xue_flush_range(xue, xue->dbc_ering.trb, XUE_TRB_RING_BYTES);
     xue_flush_range(xue, xue->dbc_oring.trb, XUE_TRB_RING_BYTES);
     xue_flush_range(xue, xue->dbc_iring.trb, XUE_TRB_RING_BYTES);
     xue_flush_range(xue, xue->dbc_owork.buf, XUE_WORK_RING_BYTES);
+
+    xue_dump(xue);
 
     return 1;
 }
@@ -1795,14 +1910,22 @@ static inline int64_t xue_open(struct xue *xue, struct xue_ops *ops, void *sys)
     }
 
     if (!xue_init_dbc(xue)) {
+        bfdebug("Oh no, just freed xue.");
         xue_free(xue);
         return 0;
     }
 
     xue_init_work_ring(xue, &xue->dbc_owork);
+
+    bfdebug("After init work ring");
+    xue_dump(xue);
+
     xue_enable_dbc(xue);
     xue->open = 1;
 
+    bfdebug("After xue enable dbc");
+    xue_dump(xue);
+    
     return 1;
 }
 
@@ -1823,6 +1946,7 @@ static inline void xue_flush(struct xue *xue, struct xue_trb_ring *trb,
 
     if (xue->open && !(reg->ctrl & (1UL << XUE_CTRL_DCE))) {
         if (!xue_init_dbc(xue)) {
+            bfdebug("Ooops, executed Xue Free");
             xue_free(xue);
             return;
         }
@@ -1833,10 +1957,14 @@ static inline void xue_flush(struct xue *xue, struct xue_trb_ring *trb,
 
     xue_pop_events(xue);
 
+    bfdebug("Got Events");
+
     if (!(reg->ctrl & (1UL << XUE_CTRL_DCR))) {
         xue_error("DbC not configured");
         return;
     }
+
+    bfdebug("DbC configured.");
 
     if (reg->ctrl & (1UL << XUE_CTRL_DRC)) {
         reg->ctrl |= (1UL << XUE_CTRL_DRC);
@@ -1848,9 +1976,13 @@ static inline void xue_flush(struct xue *xue, struct xue_trb_ring *trb,
         return;
     }
 
+    bfdebug("Xue trb ring not full");
+
     if (wrk->enq == wrk->deq) {
+        bfdebug("Xue work ring - nothing todo");
         return;
     } else if (wrk->enq > wrk->deq) {
+        bfdebug("Xue pushed trb to Work ring - 1 ");
         xue_push_trb(xue, trb, wrk->dma + wrk->deq, wrk->enq - wrk->deq);
         wrk->deq = wrk->enq;
     } else {
@@ -1859,6 +1991,7 @@ static inline void xue_flush(struct xue *xue, struct xue_trb_ring *trb,
         wrk->deq = 0;
         if (wrk->enq > 0 && !xue_trb_ring_full(trb)) {
             xue_push_trb(xue, trb, wrk->dma, wrk->enq);
+            bfdebug("Xue pushed trb to Work ring - 2");
             wrk->deq = wrk->enq;
         }
     }
@@ -1885,12 +2018,18 @@ static inline int64_t xue_write(struct xue *xue, const char *buf, uint64_t size)
         return 0;
     }
 
+    xue_dump(xue);
+
     ret = xue_push_work(xue, &xue->dbc_owork, buf, size);
     if (!ret) {
         return 0;
     }
 
+    bfdebug("Xue pushed work");
+
     xue_flush(xue, &xue->dbc_oring, &xue->dbc_owork);
+
+    
     return ret;
 }
 

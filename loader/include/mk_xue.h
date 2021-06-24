@@ -26,6 +26,12 @@
 
 #include <mutable_span_t.h>
 #include <types.h>
+#include <constants.h>
+#include <debug.h>
+#include <map_4k_page_rw.h>
+#include <mutable_span_t.h>
+#include <platform.h>
+#include <root_page_table_t.h>
 
 /** @brief stores the mmio / dma pool used by the microkernel for Xue */
 extern struct mutable_span_t g_mk_xue_mmio;
@@ -43,5 +49,22 @@ extern struct mutable_span_t g_mk_xue_dma;
  *   @param page_pool the mutable_span_t to store the huge pool addr/size.
  *   @return 0 on success, LOADER_FAILURE on failure.
  */
-int64_t alloc_mk_xue_dma(uint32_t const size, struct mutable_span_t *const xue_dma_pool);
-void dump_mk_xue_dma(struct mutable_span_t *const xue_dma_pool);
+int64_t 
+alloc_mk_xue_dma(uint32_t const size, struct mutable_span_t *const xue_dma_pool);
+
+void 
+dump_mk_xue_dma(struct mutable_span_t *const xue_dma_pool);
+
+int64_t
+map_mk_xue_dma(struct mutable_span_t const *const xue_dma_pool, root_page_table_t *const rpt);
+
+int64_t 
+alloc_mk_xue_mmio(uint32_t const size, struct mutable_span_t *const xue_mmio);
+
+void 
+dump_mk_xue_mmio(struct mutable_span_t *const xue_mmio);
+
+int64_t
+map_mk_xue_mmio(struct mutable_span_t const *const xue_mmio, root_page_table_t *const rpt);
+
+
