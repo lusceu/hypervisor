@@ -157,26 +157,48 @@ alloc_and_start_the_vmm(struct start_vmm_args_t const *const args)
     }
 
     #ifdef HYPERVISOR_SERIAL_USB3_XUE
+
     if (alloc_mk_xue_dma(128, &g_mk_xue_dma)) {
         bferror("alloc_mk_xue_dma failed");
         goto alloc_mk_huge_pool_failed;
     }
 
-    xue_open(&g_xue, &g_xue_ops, NULL);
-
-
-    //xue_init_ops(&g_xue, &g_xue_ops);
-    //g_xue.sys = NULL;
-
-    // WRITE_PORT_ULONG((PULONG)0XCF8, (ULONG)1); - works
-    // xhc_mmio_phys(&g_xue); - works
+    //- works
+    xhc_mmio_phys(&g_xue); 
 
     bfdebug("xue mmio:");
     bfdebug_ptr(" - addr", (void*)g_xue.xhc_mmio);
     bfdebug_x64(" - size", g_xue.xhc_mmio_size);
 
-    const char success[] = "Erfolg";
-    xue_write(&g_xue, success, sizeof(success));
+    g_mk_xue_mmio.addr = g_xue.xhc_mmio_phys;
+    g_mk_xue_mmio.size = g_xue.xhc_mmio_size;
+
+    /*
+        map4k of dma & mmio 
+    */
+
+    if (map_mk_xue_dma_pool(&g_mk_xue_dma, g_mk_root_page_table)) {
+        bferror("map_mk_xue_dma_pool failed");
+        goto map_mk_huge_pool_failed;
+    }
+
+    if (map_mk_xue_mmio(&g_mk_xue_mmio, g_mk_root_page_table)) {
+        bferror("map_mk_xue_mmio failed");
+        goto map_mk_huge_pool_failed;
+    }
+
+    /*
+        Xue in Windows - not working due to XHCI reset (Problems with Windows internals?)
+    */
+
+    //xue_open(&g_xue, &g_xue_ops, NULL);
+    //xue_init_ops(&g_xue, &g_xue_ops);
+    //g_xue.sys = NULL;
+
+    // WRITE_PORT_ULONG((PULONG)0XCF8, (ULONG)1); - works
+
+    //const char success[] = "Erfolg";
+    //xue_write(&g_xue, success, sizeof(success));
 
     
     //dump_mk_xue_dma(&g_mk_xue_dma);
@@ -192,6 +214,8 @@ alloc_and_start_the_vmm(struct start_vmm_args_t const *const args)
     dump_mk_elf_segments(g_mk_elf_segments);
     dump_mk_page_pool(&g_mk_page_pool);
     dump_mk_huge_pool(&g_mk_huge_pool);
+    dump_mk_dma_pool(&g_mk_dma_pool);
+    dump_mk_mmio(&g_mk_mmio);
 #endif
 
     if (platform_on_each_cpu(start_vmm_per_cpu, PLATFORM_FORWARD)) {

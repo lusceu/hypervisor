@@ -35,6 +35,7 @@
 #include <bsl/touch.hpp>
 #include <bsl/unlikely.hpp>
 #include <bsl/unlikely_assert.hpp>
+#include <xue.h>
 
 namespace mk
 {
@@ -505,6 +506,8 @@ namespace mk
                 bsl::print<bsl::V>() << bsl::here();
                 return bsl::errc_failure;
             }
+
+            // Xue starting point in hypervisor
 
             return bsl::errc_success;
         }
