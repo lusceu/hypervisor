@@ -25,13 +25,12 @@
  */
 
 #include <mutable_span_t.h>
-#include <constants.h>
-#include <debug.h>
-#include <mutable_span_t.h>
-#include <platform.h>
 #include <types.h>
 #include <root_page_table_t.h>
-
+#include <constants.h>
+#include <debug.h>
+#include <map_4k_page_rw.h>
+#include <platform.h>
 
 /** @brief stores mmio & dma regions associated with Xue */
 struct mutable_span_t g_mk_xue_mmio = {0};
@@ -108,7 +107,7 @@ map_mk_xue_dma_pool(struct mutable_span_t const *const xue_dma_pool, root_page_t
 {
     uint64_t off;
     uint64_t base_phys;
-    uint64_t const base_virt = HYPERVISOR_MK_DMA_ADDR;
+    uint64_t const base_virt = HYPERVISOR_MK_XUE_DMA_ADDR;
 
     base_phys = platform_virt_to_phys(xue_dma_pool->addr);
     if (((uint64_t)0) == base_phys) {
@@ -117,19 +116,15 @@ map_mk_xue_dma_pool(struct mutable_span_t const *const xue_dma_pool, root_page_t
     }
 
     for (off = ((uint64_t)0); off < xue_dma_pool->size; off += HYPERVISOR_PAGE_SIZE) {
-
         uint64_t phys = platform_virt_to_phys(xue_dma_pool->addr + off);
+        void * virt = (void*)(base_virt + off);
+
         if (((uint64_t)0) == phys) {
             bferror("platform_virt_to_phys failed");
             return LOADER_FAILURE;
         }
 
-        if (phys != base_phys + off) {
-            bferror("huge pool is not physically contiguous");
-            return LOADER_FAILURE;
-        }
-
-        if (map_4k_page_rw((void *)(base_virt + phys), phys, rpt)) {
+        if (map_4k_page_rw(virt, phys, rpt)) {
             bferror("map_4k_page_rw failed");
             return LOADER_FAILURE;
         }
@@ -152,7 +147,7 @@ map_mk_xue_dma_pool(struct mutable_span_t const *const xue_dma_pool, root_page_t
 void
 dump_mk_xue_mmio(struct mutable_span_t *const xue_mmio)
 {
-    bfdebug("xue mmio space:");
+    bfdebug("xue mmio phys space:");
     bfdebug_ptr(" - addr", xue_mmio->addr);
     bfdebug_x64(" - size", xue_mmio->size);
 }
@@ -161,21 +156,14 @@ int64_t
 map_mk_xue_mmio(struct mutable_span_t const *const xue_mmio, root_page_table_t *const rpt)
 {
     uint64_t off;
-    uint64_t base_phys;
-    uint64_t const base_virt = HYPERVISOR_MK_MMIO_ADDR;
-
-    base_phys = xue_mmio->addr;
+    uint64_t base_phys = (uint64_t)xue_mmio->addr;;
+    uint64_t const base_virt = HYPERVISOR_MK_XUE_MMIO_ADDR;
 
     for (off = ((uint64_t)0); off < xue_mmio->size; off += HYPERVISOR_PAGE_SIZE) {
+        uint64_t phys = base_phys + off;
+        void * virt = (void *)(base_virt + off);
 
-        uint64_t phys = xue_mmio->addr + off;
-
-        if (phys != base_phys + off) {
-            bferror("xue mmio is not physically contiguous");
-            return LOADER_FAILURE;
-        }
-
-        if (map_4k_page_rw((void *)(base_virt + phys), phys, rpt)) {
+        if (map_4k_page_rw(virt, phys, rpt)) {
             bferror("xue mmio: map_4k_page_rw failed");
             return LOADER_FAILURE;
         }

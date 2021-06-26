@@ -469,7 +469,7 @@ bf_add_config(
     CONFIG_TYPE STRING
     DEFAULT_VAL "0x0000358000000000"
     DESCRIPTION "Defines the microkernel's XHCI MMIO address"
-    OPTIONS 0x0000009000000000
+    SKIP_VALIDATION
 )
 
 bf_add_config(
@@ -477,6 +477,6 @@ bf_add_config(
     CONFIG_TYPE STRING
     DEFAULT_VAL "0x0000368000000000"
     DESCRIPTION "Defines the microkernel's XHCI DMA address"
-    OPTIONS 0x000000A000000000
+    SKIP_VALIDATION
 )
 

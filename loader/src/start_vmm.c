@@ -71,6 +71,7 @@
 #define HYPERVISOR_SERIAL_USB3_XUE
 #ifdef HYPERVISOR_SERIAL_USB3_XUE
 #include <xue.h>
+#define DEBUG_LOADER
 #endif
 
 struct xue g_xue;
@@ -163,19 +164,20 @@ alloc_and_start_the_vmm(struct start_vmm_args_t const *const args)
         goto alloc_mk_huge_pool_failed;
     }
 
-    //- works
+    //- initialize xue ops, then get physical mmio address via pci BAR
+    xue_init_ops(&g_xue, &g_xue_ops);
     xhc_mmio_phys(&g_xue); 
 
     bfdebug("xue mmio:");
-    bfdebug_ptr(" - addr", (void*)g_xue.xhc_mmio);
+    bfdebug_ptr(" - addr", (void*)g_xue.xhc_mmio_phys);
     bfdebug_x64(" - size", g_xue.xhc_mmio_size);
 
-    g_mk_xue_mmio.addr = g_xue.xhc_mmio_phys;
+    g_mk_xue_mmio.addr = (uint8_t *)g_xue.xhc_mmio_phys;
     g_mk_xue_mmio.size = g_xue.xhc_mmio_size;
 
-    /*
-        map4k of dma & mmio 
-    */
+    // /*
+    //     map4k of dma & mmio 
+    // */
 
     if (map_mk_xue_dma_pool(&g_mk_xue_dma, g_mk_root_page_table)) {
         bferror("map_mk_xue_dma_pool failed");
@@ -214,8 +216,8 @@ alloc_and_start_the_vmm(struct start_vmm_args_t const *const args)
     dump_mk_elf_segments(g_mk_elf_segments);
     dump_mk_page_pool(&g_mk_page_pool);
     dump_mk_huge_pool(&g_mk_huge_pool);
-    dump_mk_dma_pool(&g_mk_dma_pool);
-    dump_mk_mmio(&g_mk_mmio);
+    dump_mk_xue_dma(&g_mk_xue_dma);
+    dump_mk_xue_mmio(&g_mk_xue_mmio);
 #endif
 
     if (platform_on_each_cpu(start_vmm_per_cpu, PLATFORM_FORWARD)) {

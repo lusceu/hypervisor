@@ -53,10 +53,10 @@ int64_t
 alloc_mk_xue_dma(uint32_t const size, struct mutable_span_t *const xue_dma_pool);
 
 void 
-dump_mk_xue_dma_pool(struct mutable_span_t *const xue_dma_pool);
+dump_mk_xue_dma(struct mutable_span_t *const xue_dma_pool);
 
 int64_t
-map_mk_xue_dma(struct mutable_span_t const *const xue_dma_pool, root_page_table_t *const rpt);
+map_mk_xue_dma_pool(struct mutable_span_t const *const xue_dma_pool, root_page_table_t *const rpt);
 
 /* logic of MMIO to own function ?
 int64_t 
