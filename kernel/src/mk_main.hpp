@@ -27,7 +27,6 @@
 
 #include <mk_interface.hpp>
 #include <vmexit_loop_entry.hpp>
-
 #include <bsl/debug.hpp>
 #include <bsl/errc_type.hpp>
 #include <bsl/exit_code.hpp>
@@ -507,7 +506,14 @@ namespace mk
                 return bsl::errc_failure;
             }
 
-            // Xue starting point in hypervisor
+            /// Xue - USB3 Serial Connection
+            /// 
+            /// MMIO is mapped to HYPERVISOR_MK_XUE_MMIO_ADDR
+            ///
+            bsl::error() << "Xue test";
+                /// DMA is mapped to HYPERVISOR_MK_XUE_DMA_ADDR;
+                ///
+                /// open, init ops,
 
             return bsl::errc_success;
         }
